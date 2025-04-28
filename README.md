@@ -21,3 +21,7 @@ docker-compose up -d --build
 ✅ MariaDB accessible via localhost:3306
 
 ✅ Playwright prêt dans son conteneur
+
+```
+npx playwright test
+```
