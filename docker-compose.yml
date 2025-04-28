@@ -1,0 +1,66 @@
+services:
+  mariadb:
+    image: mariadb:10.6
+    container_name: ateja-mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - ateja-network
+
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: ateja-jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ateja-network
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.41.0-jammy
+    container_name: ateja-playwright
+    entrypoint: ["sleep", "infinity"]
+    networks:
+      - ateja-network
+
+  squash-tm:
+    image: squashtest/squash:9.0.0
+    container_name: ateja-squash
+    depends_on:
+      - mariadb
+    environment:
+      SQTM_DB_TYPE: mariadb
+      SQTM_DB_HOST: ateja-mariadb
+      SQTM_DB_PORT: 3306
+      SQTM_DB_NAME: ${MARIADB_DATABASE}
+      SQTM_DB_USERNAME: ${MARIADB_USER}
+      SQTM_DB_PASSWORD: ${MARIADB_PASSWORD}
+      TZ: Europe/Paris
+    ports:
+      - "8090:8080"
+    volumes:
+      - squash_tm_logs:/opt/squash-tm/logs
+    networks:
+      - ateja-network
+
+networks:
+  ateja-network:
+    driver: bridge
+
+volumes:
+  db_data:
+  jenkins_home:
+  squash_tm_logs:
